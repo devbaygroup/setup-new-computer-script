@@ -1,0 +1,341 @@
+---
+  - name: Install MacOS Packages
+    hosts: localhost
+    vars:
+      brew_cask_packages:
+        - cheatsheet
+        - coconutbattery
+        - devdocs
+        - devtoys
+        - docker
+        - dozer
+        - fig
+        - google-chrome
+        - google-cloud-sdk
+        - hot
+        - iterm2
+        - jupyter-notebook-viewer
+        - keepingyouawake
+        - michaelvillar-timer
+        - muzzle
+        - spectacle
+        - stats
+        - tad
+        - the-unarchiver
+        - tyke
+        - visual-studio-code
+      brew_packages:
+      ### docker
+        - ctop
+        - lazydocker
+      ### git
+        - gh
+        - git
+        - git-delta
+        - pre-commit
+      ### python
+        - black
+        - pipenv
+        - pipx
+        - pyenv-virtualenv
+        - pyenv-which-ext
+        - pyenv
+      ### terraform
+        - terraform
+        - terraform-docs
+        - tflint
+        - tfsec
+      ### shell
+        - fish
+        - starship
+      ### utilities
+        - aria2
+        - bat
+        - bpytop
+        - colordiff
+        - curl
+        - difftastic
+        - dog
+        - duf
+        - dust
+        - exa
+        - fd
+        - fx
+        - fzf
+        - glow
+        - htop
+        - httpie
+        - jq
+        - markdownlint-cli
+        - ncdu
+        - procs
+        - ripgrep
+        - rsync
+        - sops
+        - tldr
+        - tree
+        - watch
+        - wget
+        - yt-dlp
+      ### misc
+        - awscli
+        - caddy
+        - mpv
+        - neovim
+        - node
+        - tmux
+      vscode_extensions:
+        - 4ops.terraform
+        - akamud.vscode-theme-onelight
+        - amazonwebservices.aws-toolkit-vscode
+        - bierner.markdown-mermaid
+        - bladnman.auto-align
+        - bmalehorn.vscode-fish
+        - bungcip.better-toml
+        - christian-kohler.path-intellisense
+        - cschleiden.vscode-github-actions
+        - DavidAnson.vscode-markdownlint
+        - davidfreer.go-to-character-position
+        - donjayamanne.python-environment-manager
+        - esbenp.prettier-vscode
+        - flesler.url-encode
+        - fvclaus.sort-json-array
+        - GitHub.vscode-pull-request-github
+        - GrapeCity.gc-excelviewer
+        - hancel.markdown-image
+        - hashicorp.hcl
+        - hashicorp.terraform
+        - hbenl.vscode-test-explorer
+        - helgardrichard.helium-icon-theme
+        - iceyer.toml-formatter
+        - Infracost.infracost
+        - joffreykern.markdown-toc
+        - johnpapa.vscode-peacock
+        - leodevbro.blockman
+        - letmaik.git-tree-compare
+        - marp-team.marp-vscode
+        - mechatroner.rainbow-csv
+        - mhutchie.git-graph
+        - ms-azuretools.vscode-docker
+        - ms-kubernetes-tools.vscode-kubernetes-tools
+        - ms-python.python
+        - ms-python.vscode-pylance
+        - ms-toolsai.jupyter
+        - ms-toolsai.jupyter-keymap
+        - ms-toolsai.jupyter-renderers
+        - ms-vscode-remote.remote-containers
+        - ms-vscode-remote.remote-ssh
+        - ms-vscode-remote.remote-ssh-edit
+        - ms-vscode-remote.vscode-remote-extensionpack
+        - ms-vscode.atom-keybindings
+        - ms-vscode.test-adapter-converter
+        - ms-vsliveshare.vsliveshare
+        - mushan.vscode-paste-image
+        - pnp.polacode
+        - ptweir.python-string-sql
+        - qezhu.gitlink
+        - RandomFractalsInc.geo-data-viewer
+        - RandomFractalsInc.vscode-data-preview
+        - redhat.vscode-yaml
+        - Rubymaniac.vscode-paste-and-indent
+        - ryu1kn.partial-diff
+        - ryu1kn.text-marker
+        - shakram02.bash-beautify
+        - SimonSiefke.prettier-vscode
+        - sourcery.sourcery
+        - TabNine.tabnine-vscode
+        - TakumiI.markdowntable
+        - tht13.html-preview-vscode
+        - vincentfiestada.cold-horizon-vscode
+        - vsls-contrib.gistfs
+        - waderyan.gitblame
+        - yaruson.ascii-unicode-escape
+        - yzane.markdown-pdf
+        - zamerick.vscode-caddyfile-syntax
+        - zhuangtongfa.material-theme
+      upgrade_homebrew_packages: false
+      install_homebrew_if_missing: true
+    pre_tasks:
+      - name: Ensuring Homebrew Is Installed
+        stat:
+          path: /opt/homebrew/bin
+        register: homebrew_check
+      - name: Fail If Homebrew Is Not Installed and install_homebrew_if_missing Is False
+        fail:
+          msg: Homebrew is missing...Install from http://brew.sh/
+        when:
+          - not homebrew_check.stat.exists
+          - not install_homebrew_if_missing
+      - name: Installing Homebrew
+        shell: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        when:
+          - not homebrew_check.stat.exists
+          - install_homebrew_if_missing
+    tasks:
+      - name: Updating Homebrew
+        homebrew:
+          update_homebrew: true
+        when: homebrew_check.stat.exists
+      - name: Upgrading Homebrew Packages
+        homebrew:
+          upgrade_all: "{{ upgrade_homebrew_packages }}"
+        register: result
+        until: result is successful
+        when: homebrew_check.stat.exists
+      - name: Installing Homebrew Cask Packages
+        homebrew_cask:
+          name: "{{ item }}"
+          state: present
+          path: /opt/homebrew/bin
+        register: result
+        until: result is successful
+        when: homebrew_check.stat.exists
+        with_items: "{{ brew_cask_packages }}"
+        ignore_errors: true # homebrew cask throws error if app is already installed via normal installer
+      - name: Installing Homebrew Packages
+        homebrew:
+          name: "{{ item }}"
+          state: present
+          path: /opt/homebrew/bin
+        register: result
+        until: result is successful
+        when: homebrew_check.stat.exists
+        with_items: "{{ brew_packages }}"
+      - name: Installing Fonts
+        shell: |
+          /opt/homebrew/bin/brew tap homebrew/cask-fonts
+          /opt/homebrew/bin/brew install font-meslo-lg-nerd-font
+        register: result
+        until: result is successful
+        when: homebrew_check.stat.exists
+      - name: Installing Default Python
+        shell: /opt/homebrew/bin/pyenv install -s 3.10.3
+      - name: Install Visual Studio Code extensions
+        shell: |
+          code --install-extension "{{ item }}"
+        with_items: "{{ vscode_extensions }}"
+  - name: System Tweaks
+    hosts: localhost
+    become: true
+    tasks:
+      - name: "General: Expand save and print panel by default"
+        shell: |
+          defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true
+          defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
+          defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
+          defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
+      - name: "General: Save to disk (not to iCloud) by default"
+        shell: |
+          defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
+      - name: "General: Avoid creating .DS_Store files on network volumes"
+        shell: |
+          defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+      - name: "Typing: Disable smart quotes and dashes as they cause problems when typing code"
+        shell: |
+          defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
+          defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
+      - name: "Typing: Disable press-and-hold for keys in favor of key repeat"
+        shell: |
+          defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+      - name: "Finder: Show status bar and path bar"
+        shell: |
+          defaults write com.apple.finder ShowStatusBar -bool true
+          defaults write com.apple.finder ShowPathbar -bool true
+      - name: "Finder: Disable the warning when changing a file extension"
+        shell: |
+          defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+      - name: "Finder: Show the ~/Library folder"
+        shell: |
+          chflags nohidden ~/Library
+      - name: "Security: Disable OSX app security check"
+        shell: |
+          spctl --master-disable
+  - name: Setup nvim
+    hosts: localhost
+    tasks:
+      - name: Create nvim Config Directory
+        file:
+          path: ~/.config/nvim/
+          state: directory
+      - name: Write nvim Config
+        copy: src=./dotfiles/.config/nvim/init.vim dest=~/.config/nvim/init.vim force=no
+      - name: Install vim-plug
+        shell: |
+          sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+            https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+          nvim --headless +PlugInstall +qall
+  - name: Setup Git Config
+    hosts: localhost
+    vars_prompt:
+      - name: git_name
+        prompt: What is your Git name?
+        private: false
+      - name: git_email
+        prompt: What is your Git email?
+        private: false
+    tasks:
+      - name: Set username
+        community.general.git_config:
+          name: user.name
+          scope: global
+          value: "{{ git_name }}"
+      - name: Set email
+        community.general.git_config:
+          name: user.email
+          scope: global
+          value: "{{ git_email }}"
+      - name: Use ssh instread of https
+        command: git config --global url."git@github.com:".insteadOf https://github.com/
+      - name: Set Git to store credentials in Keychain
+        community.general.git_config:
+          name: credential.helper
+          scope: global
+          value: osxkeychain
+      - name: Set pre-commit config
+        community.general.git_config:
+          name: init.templateDir
+          scope: global
+          value: ~/.git-template
+      - name: Init pre-commit
+        shell: pre-commit init-templatedir ~/.git-template
+      - name: Set syntax highlighting
+        shell: |
+          git config --global core.pager delta
+          git config --global delta.navigate true
+          git config --global delta.side-by-side true
+          git config --global merge.conflictstyle diff3
+          git config --global diff.colorMoved default
+          git config --global interactive.diffFilter delta --color-only
+          git config --global add.interactive.useBuiltin false # required for git 2.37.0
+  - name: Setup SSH
+    hosts: localhost
+    tasks:
+      - name: Create SSH Config Directory
+        file:
+          path: ~/.ssh/
+          state: directory
+      - name: Write ssh Config
+        copy: src=./dotfiles/.ssh/config dest=~/.ssh/config force=no
+      - name: Check SSH key for git
+        stat:
+          path: ~/.ssh/github
+        register: ssh_key_git_check
+      - name: Create SSH key for git
+        shell: ssh-keygen -b 2048 -t rsa -f ~/.ssh/github -q -N ""
+        when:
+          - not ssh_key_git_check.stat.exists
+  - name: Setup Dotfiles
+    hosts: localhost
+    tasks:
+      - name: Create fish Config Directory
+        file:
+          path: ~/.config/fish/
+          state: directory
+      - name: Write fish Config
+        copy: src=./dotfiles/.config/fish/config.fish dest=~/.config/fish/config.fish force=no
+      - name: Write starship Config
+        copy: src=./dotfiles/.config/starship.toml dest=~/.config/starship.toml force=no
+      - name: Write pyenv Config
+        copy: src=./dotfiles/.pyenv/version dest=~/.pyenv/version force=no
+      - name: Write vscode Config
+        copy: src=./dotfiles/vscode_settings.json dest="~/Library/Application Support/Code/User/settings.json" force=no
