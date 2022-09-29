@@ -153,6 +153,12 @@
         - yzane.markdown-pdf
         - zamerick.vscode-caddyfile-syntax
         - zhuangtongfa.material-theme
+      fisher_plugins:
+        - jethrokuan/z
+        - franciscolourenco/done
+        - jorgebucaran/autopair.fish
+        - jorgebucaran/nvm.fish
+        - meaningful-ooo/sponge
       upgrade_homebrew_packages: false
       install_homebrew_if_missing: true
     pre_tasks:
@@ -214,6 +220,15 @@
         shell: |
           code --install-extension "{{ item }}"
         with_items: "{{ vscode_extensions }}"
+      - name: Install fisher
+        shell: |
+          curl -Lo ~/.config/fish/functions/fisher.fish --create-dirs https://git.io/fisher
+      - name: Install fisher plugins
+        args:
+          executable: /opt/homebrew/bin/fish
+        shell: |
+          fisher install "{{ item }}"
+        with_items: "{{ fisher_plugins }}"
   - name: System Tweaks
     hosts: localhost
     become: true

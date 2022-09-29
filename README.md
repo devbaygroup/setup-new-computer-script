@@ -5,7 +5,6 @@ adapted from:
 - https://gist.github.com/mrlesmithjr/f3c15fdd53020a71f55c2032b8be2eda
 - https://github.com/vendasta/setup-new-computer-script
 
-
 ## Usage
 
 ```bash
@@ -29,12 +28,3 @@ https://docs.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-
 
 - set `tap to single click`
 - set `three-finger drag`
-
-### Install fish plugins
-
-```bash
-curl -Lo ~/.config/fish/functions/fisher.fish --create-dirs https://git.io/fisher
-fisher install jethrokuan/z
-fisher install franciscolourenco/done
-fisher install jorgebucaran/autopair.fish
-```
